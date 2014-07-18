@@ -115,8 +115,8 @@ for(key in args){
 	}
 }
 
-console.log(args_files);
-console.log(args_options);
+//console.log(args_files);
+//console.log(args_options);
 
 if(args_files.length < 2){
 	console.log("ERROR".red, "not enough arguments".cyan);
@@ -135,6 +135,6 @@ var greaterdoc = yaml.safeLoad(fs.readFileSync(args_files[1], 'utf8'));
 compareJSON(0, lesserdoc, greaterdoc);
 
 if(args_options.indexOf("--dryrun") == -1) 
-	fs.writeFile(args_files[1]+'.new.yaml', yaml.dump(greaterdoc));
+	fs.writeFile(args_files[1]+'.new', yaml.dump(greaterdoc));
 
 //console.log(greaterdoc.);
