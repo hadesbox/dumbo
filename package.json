@@ -1,0 +1,12 @@
+{
+  "name": "manu",
+  "version": "0.0.1",
+  "author": "Beeva <luis.gonzalez@beeva.com>",
+  "description": "tool para generacion de fichero",
+  "scripts": {"start": "node main.js"},
+  "dependencies" : {
+    "js-yaml"   :  "*",
+    "colors"   :  "*",
+    "readline-sync" :"*"
+  }
+}

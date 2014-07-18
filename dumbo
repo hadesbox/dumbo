@@ -1,0 +1,140 @@
+#!/usr/bin/env node
+
+colors = require('colors');
+yaml = require('js-yaml');
+
+fs   = require('fs');
+readlineSync = require('readline-sync');
+
+/////////////// FUNCTIONS
+
+function genTabs(numTabs){
+	indents = "";
+	for(i=0;i<numTabs;i++) indents+="\t";
+	return indents;
+}
+
+function pad(number) {
+	if (number<=999) { number = ("000"+number).slice(-3); }
+	return number;
+}
+
+function whatIsIt(object) {
+    if (object === null) {
+        return "null";
+    }
+    else if (object === undefined) {
+        return "undefined";
+    }
+    else if (object.constructor === String) {
+        return "String";
+    }
+    else if (object.constructor === Array) {
+        return "Array";
+    }
+    else if (object.constructor === Object) {
+        return "Object";
+    }
+    else if (object.constructor === Boolean) {
+        return "Boolean";
+    }
+    else if (object.constructor === Number) {
+        return "Number";
+    }        
+    else {
+        return "don't know but" + object.constructor;
+    }
+}
+
+function readUserInput(){
+	answer = "";
+	while(answer == "" && answer != ""){
+		answer = readlineSync.question('What is your favorite food? :');
+	}
+}
+
+function compareJSON(level, firstdoc, seconddoc){
+	try {
+		for (var key in firstdoc) {
+			propcounter++;
+			if(firstdoc[key].constructor == Object && seconddoc.hasOwnProperty(key)){
+				console.log(genTabs(level), pad(propcounter).yellow, key.grey);	
+				compareJSON(level+1, firstdoc[key], seconddoc[key]);
+			}
+			else{
+				typefirst = whatIsIt(firstdoc[key]);
+				typesecond = whatIsIt(seconddoc[key]);
+				firstval = JSON.stringify(firstdoc[key]);
+				if (!seconddoc.hasOwnProperty(key)) {
+					console.log(genTabs(level), pad(propcounter).yellow, key.cyan, firstval.blue, ">>", "undefined".rainbow);	
+					if(args_options.indexOf("--dryrun") == -1) {
+						var answer = readlineSync.question('Apply? [n]/y ').toUpperCase();
+						if(answer == "Y"){
+							seconddoc[key] = firstdoc[key];
+						}			
+					}
+				}
+				else{
+					secondval = JSON.stringify(seconddoc[key]);
+					if(firstval == secondval){
+						if(args_options.indexOf("--all") != -1) 
+							console.log(genTabs(level), pad(propcounter).yellow, key.cyan, firstval.blue, "==", secondval.blue)
+					}
+					else{
+						console.log(genTabs(level), pad(propcounter).yellow, key.cyan, firstval.blue, ">>", secondval.red);
+						if(args_options.indexOf("--dryrun") == -1) {
+							var answer = readlineSync.question('Apply? [n]/y ').toUpperCase();
+							if(answer == "Y"){
+								seconddoc[key] = firstdoc[key];
+							}													
+						}
+					}
+				}				
+			}
+		}
+	} catch (e) {
+		console.log("ERRRORRRRRRRRRRRRRR, reportar a luix", e);
+		process.exit();
+	}
+}
+
+/////////////// MAIN PROGRAM
+
+//remove node and env
+args = process.argv.slice(2);
+
+//parseargs
+var args_files = [];
+var args_options = [];
+for(key in args){
+	if(args[key][0] == "-"){
+		args_options.push(args[key]);
+	}
+	else{
+		args_files.push(args[key]);
+	}
+}
+
+console.log(args_files);
+console.log(args_options);
+
+if(args_files.length < 2){
+	console.log("ERROR".red, "not enough arguments".cyan);
+	console.log("usage:","dumbo".grey,"<LESSERENV>".blue,"<GREATERENV>".yellow)
+	console.log("usage:","dumbo".grey,"--all","--dryrun","<LESSERENV>".blue,"<GREATERENV>".yellow)
+	process.exit(-1);
+}
+
+console.log("Processing files...".green);
+
+var propcounter = 0;
+
+var lesserdoc = yaml.safeLoad(fs.readFileSync(args_files[0], 'utf8'));
+var greaterdoc = yaml.safeLoad(fs.readFileSync(args_files[1], 'utf8'));
+
+compareJSON(0, lesserdoc, greaterdoc);
+
+if(args_options.indexOf("--dryrun") == -1) 
+	fs.writeFile(args_files[1]+'.new.yaml', yaml.dump(greaterdoc));
+
+//console.log(greaterdoc.);
